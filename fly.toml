@@ -1,0 +1,48 @@
+# Fly.io アプリケーション設定
+app = "github-uploader"
+primary_region = "nrt" # 東京リージョン
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[machine]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[deploy]
+  release_command = "echo 'Deployment starting...'"
+
+# ファイルアップロード用のボリューム設定
+[[mounts]]
+  source = "github_uploader_data"
+  destination = "/app/temp"
+
+# 環境変数（機密情報は fly secrets set で設定）
+# fly secrets set GITHUB_CLIENT_ID=your_client_id
+# fly secrets set GITHUB_CLIENT_SECRET=your_client_secret
+# fly secrets set JWT_SECRET=your_jwt_secret
+

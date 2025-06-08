@@ -1,0 +1,57 @@
+{
+  "name": "github-uploader",
+  "version": "1.0.0",
+  "description": "Mobile-friendly GitHub project uploader with OAuth authentication",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node src/simple-server.js",
+    "deploy": "fly deploy",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "github",
+    "uploader",
+    "oauth",
+    "mobile",
+    "hono",
+    "fly.io"
+  ],
+  "author": "GitHub Uploader Service",
+  "license": "MIT",
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.8.0",
+    "@octokit/rest": "^20.0.0",
+    "multer": "^1.4.5-lts.1",
+    "tar": "^6.2.0",
+    "uuid": "^9.0.0",
+    "dotenv": "^16.3.0",
+    "cookie": "^0.6.0",
+    "jsonwebtoken": "^9.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/multer": "^1.4.11",
+    "@types/tar": "^6.1.11",
+    "@types/uuid": "^9.0.0",
+    "@types/cookie": "^0.6.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

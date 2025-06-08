@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Uploader - モバイル対応プロジェクトアップローダー</title>
+    <meta name="description" content="tar.gzファイルを簡単にGitHubリポジトリとしてアップロードできるモバイル対応サービス">
+    <meta name="theme-color" content="#0366d6">
+    
+    <!-- PWA対応 -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- フォント -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                    <span class="logo-text">GitHub Uploader</span>
+                </div>
+                
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img class="user-avatar" id="userAvatar" src="" alt="User Avatar">
+                    <span class="user-name" id="userName"></span>
+                    <button class="btn-logout" id="logoutBtn">ログアウト</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+        <div class="container">
+            <!-- 未認証時の画面 -->
+            <div class="auth-section" id="authSection">
+                <div class="hero">
+                    <h1 class="hero-title">
+                        📱 モバイルから<br>
+                        <span class="highlight">GitHub</span>へ簡単アップロード
+                    </h1>
+                    <p class="hero-description">
+                        tar.gzファイルをドラッグ&ドロップするだけで、<br>
+                        自動的にGitHubリポジトリを作成してアップロードします
+                    </p>
+                    
+                    <div class="features">
+                        <div class="feature">
+                            <div class="feature-icon">🔐</div>
+                            <div class="feature-text">
+                                <h3>セキュア認証</h3>
+                                <p>GitHub OAuthで安全にログイン</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">📱</div>
+                            <div class="feature-text">
+                                <h3>モバイル最適化</h3>
+                                <p>スマートフォンでも快適操作</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-text">
+                                <h3>高速処理</h3>
+                                <p>自動解析＆即座にアップロード</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary btn-large" id="loginBtn">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHubでログイン
+                    </button>
+                </div>
+            </div>
+
+            <!-- 認証後の画面 -->
+            <div class="upload-section" id="uploadSection" style="display: none;">
+                <div class="upload-container">
+                    <h2 class="section-title">プロジェクトをアップロード</h2>
+                    
+                    <!-- ファイルアップロードエリア -->
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7,10 12,15 17,10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </div>
+                            <h3 class="upload-title">tar.gzファイルをドロップ</h3>
+                            <p class="upload-description">
+                                または<span class="upload-link">ファイルを選択</span>してください
+                            </p>
+                            <div class="upload-info">
+                                <small>最大100MB・対応形式: .tar.gz, .tgz</small>
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" accept=".tar.gz,.tgz" style="display: none;">
+                    </div>
+
+                    <!-- プロジェクト設定 -->
+                    <div class="project-settings" id="projectSettings" style="display: none;">
+                        <h3 class="settings-title">プロジェクト設定</h3>
+                        
+                        <div class="form-group">
+                            <label for="projectName" class="form-label">リポジトリ名</label>
+                            <input type="text" id="projectName" class="form-input" placeholder="my-awesome-project">
+                            <small class="form-help">英数字、ハイフン、アンダースコアのみ使用可能</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projectDescription" class="form-label">説明（オプション）</label>
+                            <textarea id="projectDescription" class="form-textarea" placeholder="プロジェクトの説明を入力してください" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="isPrivate">
+                                <span class="checkbox-mark"></span>
+                                プライベートリポジトリとして作成
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projectTopics" class="form-label">トピック（オプション）</label>
+                            <input type="text" id="projectTopics" class="form-input" placeholder="javascript, nodejs, web">
+                            <small class="form-help">カンマ区切りで入力</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-secondary" id="cancelBtn">キャンセル</button>
+                            <button class="btn-primary" id="uploadBtn">
+                                <span class="btn-text">アップロード開始</span>
+                                <div class="btn-spinner" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- プログレス表示 -->
+                    <div class="progress-section" id="progressSection" style="display: none;">
+                        <h3 class="progress-title">アップロード中...</h3>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        
+                        <div class="progress-info">
+                            <div class="progress-stage" id="progressStage">ファイルを解析中...</div>
+                            <div class="progress-percent" id="progressPercent">0%</div>
+                        </div>
+
+                        <div class="progress-details" id="progressDetails">
+                            <div class="detail-item">
+                                <span class="detail-label">ファイル数:</span>
+                                <span class="detail-value" id="fileCount">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">総サイズ:</span>
+                                <span class="detail-value" id="totalSize">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 結果表示 -->
+                    <div class="result-section" id="resultSection" style="display: none;">
+                        <div class="result-success" id="resultSuccess" style="display: none;">
+                            <div class="result-icon success">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"></polyline>
+                                </svg>
+                            </div>
+                            <h3 class="result-title">アップロード完了！</h3>
+                            <p class="result-description">プロジェクトが正常にGitHubにアップロードされました</p>
+                            
+                            <div class="result-info">
+                                <div class="info-item">
+                                    <span class="info-label">リポジトリ:</span>
+                                    <a class="info-link" id="repoLink" href="#" target="_blank"></a>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">作成日時:</span>
+                                    <span class="info-value" id="createdAt"></span>
+                                </div>
+                            </div>
+
+                            <div class="result-actions">
+                                <a class="btn-primary" id="viewRepoBtn" href="#" target="_blank">
+                                    リポジトリを表示
+                                </a>
+                                <button class="btn-secondary" id="newUploadBtn">
+                                    新しいアップロード
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="result-error" id="resultError" style="display: none;">
+                            <div class="result-icon error">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h3 class="result-title">アップロードエラー</h3>
+                            <p class="result-description" id="errorMessage">エラーが発生しました</p>
+                            
+                            <div class="result-actions">
+                                <button class="btn-primary" id="retryBtn">再試行</button>
+                                <button class="btn-secondary" id="resetBtn">最初から</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    &copy; 2024 GitHub Uploader Service. 
+                    <a href="https://github.com" target="_blank" class="footer-link">GitHub</a>で開発
+                </p>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">プライバシー</a>
+                    <a href="#" class="footer-link">利用規約</a>
+                    <a href="#" class="footer-link">サポート</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/js/app.js"></script>
+</body>
+</html>
+
