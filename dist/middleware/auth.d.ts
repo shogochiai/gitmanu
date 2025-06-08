@@ -1,4 +1,6 @@
 import { Context, Next } from 'hono';
+import { sessionManager } from '../utils/session.js';
+export { sessionManager };
 /**
  * 認証ミドルウェア
  */
@@ -6,24 +8,15 @@ export declare const authMiddleware: (c: Context, next: Next) => Promise<void>;
 /**
  * 認証必須ミドルウェア
  */
-export declare const requireAuth: (c: Context, next: Next) => Promise<(Response & import("hono").TypedResponse<{
-    success: false;
-    error: string;
-    message: string;
-}, 401, "json">) | undefined>;
+export declare const requireAuth: (c: Context, next: Next) => Promise<Response | void>;
 /**
  * CORS ミドルウェア
  */
-export declare const corsMiddleware: (c: Context, next: Next) => Promise<Response | undefined>;
+export declare const corsMiddleware: (c: Context, next: Next) => Promise<Response | void>;
 /**
  * エラーハンドリングミドルウェア
  */
-export declare const errorHandler: (c: Context, next: Next) => Promise<(Response & import("hono").TypedResponse<{
-    stack?: any;
-    success: false;
-    error: any;
-    message: any;
-}, any, "json">) | undefined>;
+export declare const errorHandler: (c: Context, next: Next) => Promise<Response | void>;
 /**
  * リクエストログミドルウェア
  */
@@ -36,12 +29,7 @@ export declare class RateLimiter {
     private readonly windowMs;
     private readonly maxRequests;
     constructor(windowMs?: number, maxRequests?: number);
-    middleware: (c: Context, next: Next) => Promise<(Response & import("hono").TypedResponse<{
-        success: false;
-        error: string;
-        message: string;
-        retryAfter: number;
-    }, 429, "json">) | undefined>;
+    middleware: (c: Context, next: Next) => Promise<Response | void>;
     private cleanup;
 }
 /**
@@ -51,12 +39,7 @@ export declare const securityHeaders: (c: Context, next: Next) => Promise<void>;
 /**
  * ファイルアップロード制限ミドルウェア
  */
-export declare const uploadLimiter: (maxSize?: number) => (c: Context, next: Next) => Promise<(Response & import("hono").TypedResponse<{
-    success: false;
-    error: string;
-    message: string;
-    maxSize: number;
-}, 413, "json">) | undefined>;
+export declare const uploadLimiter: (maxSize?: number) => (c: Context, next: Next) => Promise<Response | void>;
 /**
  * Cookieを設定するヘルパー関数
  */

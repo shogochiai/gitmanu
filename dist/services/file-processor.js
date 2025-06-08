@@ -33,37 +33,73 @@ export class FileProcessor {
             await fs.mkdir(extractPath, { recursive: true });
             const extractedFiles = [];
             let fileCount = 0;
+            let rootDir = null;
             // tar.gz ファイルを展開
             await tar.extract({
                 file: archivePath,
                 cwd: extractPath,
-                filter: (path, entry) => {
+                filter: (filePath, entry) => {
+                    console.log(`Processing tar entry: ${filePath} (type: ${entry.type}, size: ${entry.size})`);
+                    // ルートディレクトリを検出して除去
+                    const pathParts = filePath.split('/');
+                    if (!rootDir && pathParts.length > 0 && entry.type === 'Directory') {
+                        rootDir = pathParts[0];
+                        console.log(`Detected root directory: ${rootDir}`);
+                    }
+                    // 除外すべきディレクトリのチェック
+                    if (this.shouldExcludePath(filePath)) {
+                        console.warn(`Excluded path: ${filePath}`);
+                        return false;
+                    }
                     // ファイル数制限チェック
                     if (fileCount >= this.maxTotalFiles) {
-                        console.warn(`Too many files, skipping: ${path}`);
+                        console.warn(`Too many files, skipping: ${filePath}`);
                         return false;
                     }
                     // ファイルサイズ制限チェック
                     if (entry.size > this.maxFileSize) {
-                        console.warn(`File too large, skipping: ${path} (${entry.size} bytes)`);
+                        console.warn(`File too large, skipping: ${filePath} (${entry.size} bytes)`);
                         return false;
                     }
                     // セキュリティチェック（パストラバーサル攻撃防止）
-                    if (this.isUnsafePath(path)) {
-                        console.warn(`Unsafe path, skipping: ${path}`);
+                    if (this.isUnsafePath(filePath)) {
+                        console.warn(`Unsafe path, skipping: ${filePath}`);
                         return false;
                     }
                     // ファイル拡張子チェック
-                    if (entry.type === 'File' && !this.isAllowedFile(path)) {
-                        console.warn(`File type not allowed, skipping: ${path}`);
+                    if (entry.type === 'File' && !this.isAllowedFile(filePath)) {
+                        console.warn(`File type not allowed, skipping: ${filePath}`);
                         return false;
                     }
                     fileCount++;
                     return true;
                 },
                 onentry: (entry) => {
+                    // Note: onentry is called AFTER the filter function
+                    // If the filter returned true, the file will be extracted
+                    // We need to check again if this file should be included
                     if (entry.type === 'File') {
-                        extractedFiles.push(entry.path);
+                        const filePath = entry.path;
+                        // 除外すべきパスの再チェック
+                        if (this.shouldExcludePath(filePath)) {
+                            return;
+                        }
+                        // ファイル拡張子の再チェック
+                        if (!this.isAllowedFile(filePath)) {
+                            return;
+                        }
+                        // ルートディレクトリを除去したパスを保存
+                        let cleanPath = filePath;
+                        if (rootDir && filePath.startsWith(rootDir + '/')) {
+                            cleanPath = filePath.substring(rootDir.length + 1);
+                        }
+                        // 空のパスはスキップ
+                        if (!cleanPath || cleanPath === rootDir) {
+                            console.log(`Skipping empty or root path: ${filePath}`);
+                            return;
+                        }
+                        console.log(`Adding file to list: ${cleanPath} (original: ${filePath})`);
+                        extractedFiles.push(cleanPath);
                     }
                 }
             });
@@ -205,6 +241,39 @@ export class FileProcessor {
         }
         // NULL バイトが多い、または制御文字が多い場合はバイナリと判定
         return (nullBytes > sample.length * 0.01) || (controlChars > sample.length * 0.05);
+    }
+    /**
+     * 除外すべきパスかどうかをチェック
+     */
+    shouldExcludePath(filePath) {
+        const excludePatterns = [
+            /node_modules\//,
+            /\.git\//,
+            /\.svn\//,
+            /\.hg\//,
+            /\.DS_Store$/,
+            /Thumbs\.db$/,
+            /\.vscode\//,
+            /\.idea\//,
+            /dist\//,
+            /build\//,
+            /coverage\//,
+            /\.nyc_output\//,
+            /\.cache\//,
+            /\.next\//,
+            /\.nuxt\//,
+            /\.vuepress\//,
+            /vendor\//,
+            /bower_components\//,
+            /__pycache__\//,
+            /\.pytest_cache\//,
+            /\.mypy_cache\//,
+            /\.tox\//,
+            /\.eggs\//,
+            /\.gradle\//,
+            /target\// // Maven
+        ];
+        return excludePatterns.some(pattern => pattern.test(filePath));
     }
     /**
      * 安全でないパスかどうかをチェック

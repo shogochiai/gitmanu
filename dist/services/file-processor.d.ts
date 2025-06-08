@@ -33,6 +33,10 @@ export declare class FileProcessor {
      */
     private isBinaryFile;
     /**
+     * 除外すべきパスかどうかをチェック
+     */
+    private shouldExcludePath;
+    /**
      * 安全でないパスかどうかをチェック
      */
     private isUnsafePath;

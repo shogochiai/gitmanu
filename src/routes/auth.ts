@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { config } from '../utils/config.js';
-import { sessionManager, setCookie, deleteCookie } from '../middleware/auth.js';
+import { sessionManager } from '../utils/session.js';
+import { setCookie, deleteCookie } from '../middleware/auth.js';
 import { GitHubUser, UserSession } from '../types/index.js';
 
 // Honoの型拡張
@@ -140,25 +141,10 @@ auth.get('/github/callback', async (c) => {
     };
 
     // セッションを作成
-    const session: UserSession = {
-      sessionId: generateRandomString(32),
-      userId: user.id.toString(),
-      login: user.login,
-      accessToken: accessToken,
-      createdAt: Date.now(),
-      lastAccessAt: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24時間後
-    };
-
-    // セッションを保存
-    sessionManager.createSession(session);
+    const sessionId = sessionManager.createSession(user);
 
     // JWTトークンを生成
-    const jwtToken = sessionManager.generateJWT({
-      sessionId: session.sessionId,
-      userId: session.userId,
-      login: session.login
-    });
+    const jwtToken = sessionManager.generateJWT(sessionId);
 
     // セッションCookieを設定
     setCookie(c, 'session_token', jwtToken, {
@@ -188,7 +174,7 @@ auth.post('/logout', async (c) => {
       const jwtPayload = sessionManager.verifyJWT(sessionToken);
       if (jwtPayload) {
         // セッションを削除
-        sessionManager.deleteSession(jwtPayload.sessionId);
+        sessionManager.destroySession(jwtPayload.sessionId);
       }
     }
 
@@ -254,7 +240,7 @@ auth.get('/status', async (c) => {
 
     if (!userResponse.ok) {
       // アクセストークンが無効な場合はセッションを削除
-      sessionManager.deleteSession(jwtPayload.sessionId);
+      sessionManager.destroySession(jwtPayload.sessionId);
       deleteCookie(c, 'session_token');
       
       return c.json({

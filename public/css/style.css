@@ -194,8 +194,15 @@ body {
 .hero-description {
     font-size: var(--font-size-lg);
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
     line-height: 1.6;
+}
+
+.version-info {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-2xl);
+    font-weight: 500;
 }
 
 /* 機能紹介 */

@@ -19,6 +19,7 @@ class GitHubUploader {
         this.bindEvents();
         this.checkAuthStatus();
         this.setupDragAndDrop();
+        this.fetchVersion();
     }
 
     /**
@@ -158,6 +159,24 @@ class GitHubUploader {
     }
 
     /**
+     * バージョン情報取得
+     */
+    async fetchVersion() {
+        try {
+            const response = await fetch('/api/version');
+            if (response.ok) {
+                const data = await response.json();
+                const versionElement = document.getElementById('versionInfo');
+                if (versionElement) {
+                    versionElement.textContent = `バージョン: ${data.version}`;
+                }
+            }
+        } catch (error) {
+            console.error('バージョン情報取得エラー:', error);
+        }
+    }
+
+    /**
      * ログイン
      */
     login() {
@@ -220,9 +239,16 @@ class GitHubUploader {
 
         const file = files[0];
         
+        // Debug logging
+        console.log('Selected file:', {
+            name: file.name,
+            type: file.type || 'no MIME type',
+            size: file.size
+        });
+        
         // ファイル形式チェック
         if (!this.isValidFile(file)) {
-            this.showNotification('対応していないファイル形式です。.tar.gz または .tgz ファイルを選択してください。', 'error');
+            this.showNotification(`対応していないファイル形式です。.tar.gz または .tgz ファイルを選択してください。(MIME: ${file.type || 'none'})`, 'error');
             return;
         }
 
@@ -245,13 +271,23 @@ class GitHubUploader {
             'application/gzip',
             'application/x-gzip',
             'application/x-tar',
-            'application/x-compressed-tar'
+            'application/x-compressed-tar',
+            'application/x-compressed',
+            'application/octet-stream' // Some systems report tar.gz as octet-stream
         ];
         
         const validExtensions = ['.tar.gz', '.tgz'];
         
-        return validTypes.includes(file.type) || 
-               validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        // Check extension first (more reliable)
+        const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        
+        // If extension is valid, accept the file regardless of MIME type
+        if (hasValidExtension) {
+            return true;
+        }
+        
+        // Otherwise, check MIME type
+        return validTypes.includes(file.type);
     }
 
     /**

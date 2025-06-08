@@ -87,15 +87,20 @@ export class GitHubService {
     async uploadFiles(owner, repo, files) {
         try {
             const commits = [];
+            console.log(`Starting upload of ${files.length} files to ${owner}/${repo}`);
             for (const file of files) {
                 try {
-                    const commit = await this.createFile(owner, repo, file.path, file.content, `Add ${file.path}`);
+                    console.log(`Uploading file: ${file.path} (${file.size} bytes, encoding: ${file.encoding})`);
+                    const commit = await this.createFile(owner, repo, file.path, file.content, `Add ${file.path}`, file.encoding);
                     commits.push(commit);
+                    console.log(`Successfully uploaded: ${file.path} (commit: ${commit.sha})`);
                 }
                 catch (error) {
-                    console.warn(`Failed to upload file ${file.path}:`, error);
+                    console.error(`Failed to upload file ${file.path}:`, error.message);
+                    // Continue with other files even if one fails
                 }
             }
+            console.log(`Upload complete: ${commits.length}/${files.length} files uploaded successfully`);
             return commits;
         }
         catch (error) {
@@ -106,14 +111,24 @@ export class GitHubService {
     /**
      * ファイルを作成
      */
-    async createFile(owner, repo, path, content, message) {
+    async createFile(owner, repo, path, content, message, encoding = 'utf-8') {
         try {
+            // GitHub APIは常にbase64エンコードされたコンテンツを期待する
+            let base64Content;
+            if (encoding === 'base64') {
+                // すでにbase64エンコードされている場合はそのまま使用
+                base64Content = content;
+            }
+            else {
+                // utf-8の場合はbase64エンコード
+                base64Content = Buffer.from(content, 'utf-8').toString('base64');
+            }
             const response = await this.octokit.rest.repos.createOrUpdateFileContents({
                 owner,
                 repo,
                 path,
                 message,
-                content,
+                content: base64Content,
                 committer: {
                     name: 'GitHub Uploader',
                     email: 'noreply@github-uploader.com'
@@ -233,6 +248,10 @@ Please check the project files for license information.
             };
         }
         catch (error) {
+            // 404エラー（リポジトリが存在しない）の場合はnullを返す
+            if (error.status === 404) {
+                return null;
+            }
             console.error('Failed to get repository:', error);
             throw new Error(`Failed to get repository: ${error.message}`);
         }

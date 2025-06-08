@@ -20,7 +20,7 @@ export declare class GitHubService {
     /**
      * ファイルを作成
      */
-    createFile(owner: string, repo: string, path: string, content: string, message: string): Promise<GitHubCommit>;
+    createFile(owner: string, repo: string, path: string, content: string, message: string, encoding?: 'base64' | 'utf-8'): Promise<GitHubCommit>;
     /**
      * README.mdファイルを作成
      */
@@ -36,7 +36,7 @@ export declare class GitHubService {
     /**
      * リポジトリの詳細情報を取得
      */
-    getRepository(owner: string, repo: string): Promise<GitHubRepository>;
+    getRepository(owner: string, repo: string): Promise<GitHubRepository | null>;
     /**
      * レート制限情報を取得
      */

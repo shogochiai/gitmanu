@@ -1,5 +1,5 @@
 # Fly.io アプリケーション設定
-app = "github-uploader"
+app = "gitmanu"
 primary_region = "nrt" # 東京リージョン
 
 [build]
@@ -38,7 +38,7 @@ primary_region = "nrt" # 東京リージョン
 
 # ファイルアップロード用のボリューム設定
 [[mounts]]
-  source = "github_uploader_data"
+  source = "gitmanu_data"
   destination = "/app/temp"
 
 # 環境変数（機密情報は fly secrets set で設定）

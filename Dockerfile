@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# 依存関係をインストール
-RUN npm ci --only=production
+# 依存関係をインストール（ビルドステージなので開発依存関係も含める）
+RUN npm ci
 
 # ソースコードをコピー
 COPY src/ ./src/
@@ -35,9 +35,9 @@ RUN apk add --no-cache \
 # 作業ディレクトリを設定
 WORKDIR /app
 
-# 依存関係をコピー
-COPY --from=builder /app/node_modules ./node_modules
+# パッケージファイルをコピーして本番用依存関係のみインストール
 COPY --from=builder /app/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
 # ビルド済みファイルをコピー
 COPY --from=builder /app/dist ./dist

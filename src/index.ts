@@ -10,10 +10,18 @@ import {
   RateLimiter
 } from './middleware/auth.js';
 import { GitHubUser, UserSession } from './types/index.js';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // ルートのインポート
 import authRoutes from './routes/auth.js';
 import uploadRoutes from './routes/upload.js';
+
+// パッケージ情報を読み込む
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
 // Honoの型拡張
 type Variables = {
@@ -53,16 +61,24 @@ app.get('/health', (c) => {
   return c.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0',
+    version: packageJson.version,
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// バージョン情報
+app.get('/api/version', (c) => {
+  return c.json({
+    version: packageJson.version,
+    name: packageJson.name
   });
 });
 
 // API情報
 app.get('/api', (c) => {
   return c.json({
-    name: 'GitHub Uploader API',
-    version: '1.0.0',
+    name: 'GitManu API',
+    version: packageJson.version,
     description: 'モバイル対応のGitHubプロジェクトアップロードサービス',
     endpoints: {
       auth: {

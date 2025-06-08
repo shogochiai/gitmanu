@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Uploader - モバイル対応プロジェクトアップローダー</title>
+    <title>GitManu - モバイル対応プロジェクトアップローダー</title>
     <meta name="description" content="tar.gzファイルを簡単にGitHubリポジトリとしてアップロードできるモバイル対応サービス">
     <meta name="theme-color" content="#0366d6">
     
@@ -29,7 +29,7 @@
                     <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
                     </svg>
-                    <span class="logo-text">GitHub Uploader</span>
+                    <span class="logo-text">GitManu</span>
                 </div>
                 
                 <div class="user-info" id="userInfo" style="display: none;">
@@ -55,6 +55,7 @@
                         tar.gzファイルをドラッグ&ドロップするだけで、<br>
                         自動的にGitHubリポジトリを作成してアップロードします
                     </p>
+                    <p class="version-info" id="versionInfo">バージョン: -</p>
                     
                     <div class="features">
                         <div class="feature">
@@ -112,7 +113,7 @@
                                 <small>最大100MB・対応形式: .tar.gz, .tgz</small>
                             </div>
                         </div>
-                        <input type="file" id="fileInput" accept=".tar.gz,.tgz" style="display: none;">
+                        <input type="file" id="fileInput" accept=".tar.gz,.tgz,application/gzip,application/x-gzip,application/x-tar,application/x-compressed-tar" style="display: none;">
                     </div>
 
                     <!-- プロジェクト設定 -->
@@ -237,7 +238,7 @@
         <div class="container">
             <div class="footer-content">
                 <p class="footer-text">
-                    &copy; 2024 GitHub Uploader Service. 
+                    &copy; 2024 GitManu. 
                     <a href="https://github.com" target="_blank" class="footer-link">GitHub</a>で開発
                 </p>
                 <div class="footer-links">

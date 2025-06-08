@@ -1,5 +1,5 @@
 {
-  "name": "github-uploader",
+  "name": "gitmanu",
   "version": "1.0.0",
   "description": "Mobile-friendly GitHub project uploader with OAuth authentication",
   "main": "dist/index.js",

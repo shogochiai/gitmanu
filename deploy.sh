@@ -111,9 +111,9 @@ deploy_to_fly() {
     log_info "Fly.io にデプロイ中..."
     
     # アプリが存在するかチェック
-    if ! flyctl apps list | grep -q "github-uploader"; then
+    if ! flyctl apps list | grep -q "gitmanu"; then
         log_info "新しいアプリケーションを作成中..."
-        flyctl apps create github-uploader --org personal
+        flyctl apps create gitmanu --org personal
     fi
     
     # 環境変数を設定
@@ -133,14 +133,14 @@ deploy_to_fly() {
             case $key in
                 GITHUB_CLIENT_ID|GITHUB_CLIENT_SECRET|JWT_SECRET)
                     log_info "Setting secret: $key"
-                    flyctl secrets set "$key=$value" --app github-uploader
+                    flyctl secrets set "$key=$value" --app gitmanu
                     ;;
                 NODE_ENV|PORT|BASE_URL)
                     # これらは fly.toml で設定済み
                     ;;
                 *)
                     log_info "Setting environment variable: $key"
-                    flyctl secrets set "$key=$value" --app github-uploader
+                    flyctl secrets set "$key=$value" --app gitmanu
                     ;;
             esac
         done < .env
@@ -148,7 +148,7 @@ deploy_to_fly() {
     
     # デプロイ実行
     log_info "アプリケーションをデプロイ中..."
-    flyctl deploy --app github-uploader
+    flyctl deploy --app gitmanu
     
     log_success "デプロイ完了"
 }
@@ -158,7 +158,7 @@ verify_deployment() {
     log_info "デプロイメントを確認中..."
     
     # アプリのURLを取得
-    app_url=$(flyctl info --app github-uploader | grep "Hostname" | awk '{print $2}')
+    app_url=$(flyctl info --app gitmanu | grep "Hostname" | awk '{print $2}')
     
     if [ -n "$app_url" ]; then
         log_success "✅ アプリケーションが正常にデプロイされました!"

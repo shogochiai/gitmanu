@@ -80,32 +80,92 @@ upload.post('/', requireAuth, async (c) => {
         console.log(`File uploaded: ${file.name} (${file.size} bytes) -> ${tempFilePath}`);
         // ファイルを解析・展開
         const fileProcessor = new FileProcessor();
-        const extractedFiles = await fileProcessor.extractArchive(tempFilePath, tempExtractPath);
-        console.log(`Extracted ${extractedFiles.length} files to ${tempExtractPath}`);
+        const extractedFilePaths = await fileProcessor.extractArchive(tempFilePath, tempExtractPath);
+        console.log(`Extracted ${extractedFilePaths.length} files to ${tempExtractPath}`);
+        // デバッグ: 実際に抽出されたファイルを確認
+        try {
+            const actualFiles = await fs.readdir(tempExtractPath, { recursive: true });
+            console.log(`Actual files in ${tempExtractPath}:`, actualFiles);
+        }
+        catch (debugError) {
+            console.error('Debug readdir failed:', debugError);
+        }
         // GitHub サービスを初期化
         const githubService = new GitHubService(user.access_token);
-        // リポジトリが既に存在するかチェック
-        const existingRepo = await githubService.getRepository(user.login, projectName);
-        if (existingRepo) {
-            return c.json({
-                success: false,
-                error: 'REPOSITORY_EXISTS',
-                message: `リポジトリ "${projectName}" は既に存在します。別の名前を選択してください`
-            }, 409);
+        // 利用可能なリポジトリ名を見つける
+        let finalProjectName = projectName;
+        let suffix = 1;
+        while (true) {
+            const existingRepo = await githubService.getRepository(user.login, finalProjectName);
+            if (!existingRepo) {
+                break; // 利用可能な名前が見つかった
+            }
+            // 既に存在する場合は番号を追加
+            suffix++;
+            finalProjectName = `${projectName}-${suffix}`;
+            console.log(`Repository ${projectName} exists, trying ${finalProjectName}`);
+        }
+        // 名前が変更された場合はユーザーに通知
+        if (finalProjectName !== projectName) {
+            console.log(`Repository name changed from ${projectName} to ${finalProjectName}`);
         }
         // GitHub リポジトリを作成
-        const repository = await githubService.createRepository(projectName, projectDescription, isPrivate, topics);
+        const repository = await githubService.createRepository(finalProjectName, projectDescription, isPrivate, topics);
         console.log(`Repository created: ${repository.full_name}`);
+        // 抽出されたファイルをFileEntry形式に変換
+        const fileEntries = [];
+        console.log(`Processing ${extractedFilePaths.length} extracted files from ${tempExtractPath}`);
+        for (const filePath of extractedFilePaths) {
+            try {
+                const fullPath = path.join(tempExtractPath, filePath);
+                console.log(`Reading file: ${fullPath}`);
+                // ファイルの存在確認
+                const stats = await fs.stat(fullPath);
+                if (!stats.isFile()) {
+                    console.warn(`Skipping non-file: ${fullPath}`);
+                    continue;
+                }
+                const content = await fs.readFile(fullPath);
+                // バイナリファイルかテキストファイルかを判定（簡易的な判定）
+                const ext = path.extname(filePath).toLowerCase();
+                const binaryExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.pdf', '.zip', '.tar', '.gz', '.exe', '.dll', '.so', '.dylib'];
+                const isBinary = binaryExtensions.includes(ext);
+                fileEntries.push({
+                    path: filePath,
+                    content: content.toString(isBinary ? 'base64' : 'utf-8'),
+                    encoding: isBinary ? 'base64' : 'utf-8',
+                    size: content.length
+                });
+                console.log(`Successfully processed file: ${filePath} (${content.length} bytes, ${isBinary ? 'binary' : 'text'})`);
+            }
+            catch (error) {
+                console.error(`Failed to read file ${filePath}:`, error);
+            }
+        }
+        console.log(`Successfully prepared ${fileEntries.length} files for upload`);
+        // ファイルがない場合はエラー
+        if (fileEntries.length === 0) {
+            console.error('No files were extracted from the archive');
+            // リポジトリを削除する必要がある場合はここで削除
+            // ただし、空のリポジトリも有効なので、READMEだけ追加して続行
+            console.log('Creating repository with README only');
+        }
         // ファイルをリポジトリにアップロード
-        const uploadResults = await githubService.uploadFiles(user.login, projectName, extractedFiles);
-        console.log(`Uploaded ${uploadResults.length} files to repository`);
+        let uploadResults = [];
+        if (fileEntries.length > 0) {
+            uploadResults = await githubService.uploadFiles(user.login, finalProjectName, fileEntries);
+            console.log(`Uploaded ${uploadResults.length} files to repository`);
+        }
+        else {
+            console.log('No files to upload from the archive');
+        }
         // README.md が存在しない場合は自動生成
-        const hasReadme = extractedFiles.some(file => file.toLowerCase() === 'readme.md' ||
+        const hasReadme = extractedFilePaths.some(file => file.toLowerCase() === 'readme.md' ||
             file.toLowerCase() === 'readme.txt' ||
             file.toLowerCase() === 'readme');
         if (!hasReadme) {
-            const readmeContent = generateReadmeContent(projectName, projectDescription, topics);
-            await githubService.createFile(user.login, projectName, 'README.md', readmeContent, 'Add auto-generated README.md');
+            const readmeContent = generateReadmeContent(finalProjectName, projectDescription, topics);
+            await githubService.createFile(user.login, finalProjectName, 'README.md', readmeContent, 'Add auto-generated README.md');
             console.log('Auto-generated README.md created');
         }
         // 結果を返す
@@ -125,7 +185,7 @@ upload.post('/', requireAuth, async (c) => {
                 updated_at: repository.updated_at
             },
             upload_stats: {
-                total_files: extractedFiles.length,
+                total_files: extractedFilePaths.length,
                 uploaded_files: uploadResults.length,
                 total_size: file.size,
                 processing_time: Date.now() - timestamp
@@ -134,7 +194,9 @@ upload.post('/', requireAuth, async (c) => {
         return c.json({
             success: true,
             data: result,
-            message: 'プロジェクトが正常にアップロードされました'
+            message: finalProjectName !== projectName
+                ? `プロジェクトが "${finalProjectName}" として正常にアップロードされました（"${projectName}" は既に存在していたため）`
+                : 'プロジェクトが正常にアップロードされました'
         });
     }
     catch (error) {

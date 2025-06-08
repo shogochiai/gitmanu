@@ -3,9 +3,16 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { config } from './utils/config.js';
 import { corsMiddleware, errorHandler, requestLogger, securityHeaders, RateLimiter } from './middleware/auth.js';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // ルートのインポート
 import authRoutes from './routes/auth.js';
 import uploadRoutes from './routes/upload.js';
+// パッケージ情報を読み込む
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 // アプリケーション初期化
 const app = new Hono();
 // レート制限設定
@@ -32,15 +39,22 @@ app.get('/health', (c) => {
     return c.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        version: process.env.npm_package_version || '1.0.0',
+        version: packageJson.version,
         environment: process.env.NODE_ENV || 'development'
+    });
+});
+// バージョン情報
+app.get('/api/version', (c) => {
+    return c.json({
+        version: packageJson.version,
+        name: packageJson.name
     });
 });
 // API情報
 app.get('/api', (c) => {
     return c.json({
-        name: 'GitHub Uploader API',
-        version: '1.0.0',
+        name: 'GitManu API',
+        version: packageJson.version,
         description: 'モバイル対応のGitHubプロジェクトアップロードサービス',
         endpoints: {
             auth: {
@@ -150,11 +164,11 @@ app.notFound((c) => {
   `, 404);
 });
 // サーバー起動
-const port = config.port;
+const port = config.get('port');
 console.log(`🚀 GitHub Uploader starting...`);
-console.log(`📱 Environment: ${config.nodeEnv}`);
+console.log(`📱 Environment: ${config.get('nodeEnv')}`);
 console.log(`🔧 Port: ${port}`);
-console.log(`🔐 GitHub OAuth: ${config.github.clientId ? 'Configured' : 'Not configured'}`);
+console.log(`🔐 GitHub OAuth: ${config.get('github').clientId ? 'Configured' : 'Not configured'}`);
 serve({
     fetch: app.fetch,
     port: port

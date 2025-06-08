@@ -1,4 +1,6 @@
 import { sessionManager } from '../utils/session.js';
+// Re-export sessionManager for routes that need it
+export { sessionManager };
 /**
  * 認証ミドルウェア
  */
@@ -59,8 +61,8 @@ export const requireAuth = async (c, next) => {
     if (!user) {
         return c.json({
             success: false,
-            error: 'Authentication required',
-            message: 'ログインが必要です'
+            error: 'UNAUTHORIZED',
+            message: '認証が必要です'
         }, 401);
     }
     await next();

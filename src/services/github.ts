@@ -103,16 +103,28 @@ export class GitHubService {
   ): Promise<GitHubCommit[]> {
     try {
       const commits: GitHubCommit[] = [];
+      console.log(`Starting upload of ${files.length} files to ${owner}/${repo}`);
 
       for (const file of files) {
         try {
-          const commit = await this.createFile(owner, repo, file.path, file.content, `Add ${file.path}`);
+          console.log(`Uploading file: ${file.path} (${file.size} bytes, encoding: ${file.encoding})`);
+          const commit = await this.createFile(
+            owner, 
+            repo, 
+            file.path, 
+            file.content, 
+            `Add ${file.path}`,
+            file.encoding as 'base64' | 'utf-8'
+          );
           commits.push(commit);
-        } catch (error) {
-          console.warn(`Failed to upload file ${file.path}:`, error);
+          console.log(`Successfully uploaded: ${file.path} (commit: ${commit.sha})`);
+        } catch (error: any) {
+          console.error(`Failed to upload file ${file.path}:`, error.message);
+          // Continue with other files even if one fails
         }
       }
 
+      console.log(`Upload complete: ${commits.length}/${files.length} files uploaded successfully`);
       return commits;
     } catch (error: any) {
       console.error('File upload failed:', error);
@@ -128,15 +140,26 @@ export class GitHubService {
     repo: string,
     path: string,
     content: string,
-    message: string
+    message: string,
+    encoding: 'base64' | 'utf-8' = 'utf-8'
   ): Promise<GitHubCommit> {
     try {
+      // GitHub APIは常にbase64エンコードされたコンテンツを期待する
+      let base64Content: string;
+      if (encoding === 'base64') {
+        // すでにbase64エンコードされている場合はそのまま使用
+        base64Content = content;
+      } else {
+        // utf-8の場合はbase64エンコード
+        base64Content = Buffer.from(content, 'utf-8').toString('base64');
+      }
+
       const response = await this.octokit.rest.repos.createOrUpdateFileContents({
         owner,
         repo,
         path,
         message,
-        content,
+        content: base64Content,
         committer: {
           name: 'GitHub Uploader',
           email: 'noreply@github-uploader.com'
@@ -242,7 +265,7 @@ Please check the project files for license information.
   /**
    * リポジトリの詳細情報を取得
    */
-  async getRepository(owner: string, repo: string): Promise<GitHubRepository> {
+  async getRepository(owner: string, repo: string): Promise<GitHubRepository | null> {
     try {
       const { data: repository } = await this.octokit.rest.repos.get({
         owner,
@@ -266,6 +289,10 @@ Please check the project files for license information.
         forks_count: repository.forks_count || 0
       };
     } catch (error: any) {
+      // 404エラー（リポジトリが存在しない）の場合はnullを返す
+      if (error.status === 404) {
+        return null;
+      }
       console.error('Failed to get repository:', error);
       throw new Error(`Failed to get repository: ${error.message}`);
     }

@@ -2,6 +2,9 @@ import { Context, Next } from 'hono';
 import { sessionManager } from '../utils/session.js';
 import { GitHubUser } from '../types/index.js';
 
+// Re-export sessionManager for routes that need it
+export { sessionManager };
+
 /**
  * 認証ミドルウェア
  */
@@ -64,7 +67,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
 /**
  * 認証必須ミドルウェア
  */
-export const requireAuth = async (c: Context, next: Next) => {
+export const requireAuth = async (c: Context, next: Next): Promise<Response | void> => {
   const user = c.get('user');
   
   if (!user) {
@@ -81,7 +84,7 @@ export const requireAuth = async (c: Context, next: Next) => {
 /**
  * CORS ミドルウェア
  */
-export const corsMiddleware = async (c: Context, next: Next) => {
+export const corsMiddleware = async (c: Context, next: Next): Promise<Response | void> => {
   // プリフライトリクエストの処理
   if (c.req.method === 'OPTIONS') {
     return new Response(null, {
@@ -107,7 +110,7 @@ export const corsMiddleware = async (c: Context, next: Next) => {
 /**
  * エラーハンドリングミドルウェア
  */
-export const errorHandler = async (c: Context, next: Next) => {
+export const errorHandler = async (c: Context, next: Next): Promise<Response | void> => {
   try {
     await next();
   } catch (error: any) {
@@ -163,7 +166,7 @@ export class RateLimiter {
     setInterval(() => this.cleanup(), this.windowMs);
   }
 
-  middleware = async (c: Context, next: Next) => {
+  middleware = async (c: Context, next: Next): Promise<Response | void> => {
     const ip = c.req.header('X-Forwarded-For') || 
                c.req.header('X-Real-IP') || 
                'unknown';
@@ -233,7 +236,7 @@ export const securityHeaders = async (c: Context, next: Next) => {
  * ファイルアップロード制限ミドルウェア
  */
 export const uploadLimiter = (maxSize: number = 100 * 1024 * 1024) => {
-  return async (c: Context, next: Next) => {
+  return async (c: Context, next: Next): Promise<Response | void> => {
     const contentLength = c.req.header('Content-Length');
     
     if (contentLength && parseInt(contentLength) > maxSize) {
