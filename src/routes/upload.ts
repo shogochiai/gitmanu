@@ -102,7 +102,9 @@ upload.post('/', requireAuth, async (c) => {
 
     // ファイルを解析・展開
     const fileProcessor = new FileProcessor();
-    const extractedFilePaths = await fileProcessor.extractArchive(tempFilePath, tempExtractPath);
+    const extractResult = await fileProcessor.extractArchive(tempFilePath, tempExtractPath);
+    const extractedFilePaths = extractResult.files;
+    const rootDir = extractResult.rootDir;
 
     console.log(`Extracted ${extractedFilePaths.length} files to ${tempExtractPath}`);
     
@@ -110,6 +112,13 @@ upload.post('/', requireAuth, async (c) => {
     try {
       const actualFiles = await fs.readdir(tempExtractPath, { recursive: true });
       console.log(`Actual files in ${tempExtractPath}:`, actualFiles);
+      
+      // List immediate contents of extract path
+      const topLevelContents = await fs.readdir(tempExtractPath, { withFileTypes: true });
+      console.log('Top level contents:');
+      for (const item of topLevelContents) {
+        console.log(`  - ${item.name} (${item.isDirectory() ? 'directory' : 'file'})`);
+      }
     } catch (debugError) {
       console.error('Debug readdir failed:', debugError);
     }
@@ -154,11 +163,35 @@ upload.post('/', requireAuth, async (c) => {
     
     for (const filePath of extractedFilePaths) {
       try {
-        const fullPath = path.join(tempExtractPath, filePath);
-        console.log(`Reading file: ${fullPath}`);
+        // If there's a root directory, we need to include it in the path
+        const actualPath = rootDir ? path.join(rootDir, filePath) : filePath;
+        let fullPath = path.join(tempExtractPath, actualPath);
+        console.log(`Reading file: ${fullPath} (cleaned path: ${filePath})`);
+        console.log(`Root dir: ${rootDir}, file path: ${filePath}, actual path: ${actualPath}`);
         
         // ファイルの存在確認
-        const stats = await fs.stat(fullPath);
+        let stats;
+        try {
+          stats = await fs.stat(fullPath);
+        } catch (statError: any) {
+          console.error(`Failed to stat file ${fullPath}:`, statError.message);
+          // Try without root directory if it failed
+          if (rootDir) {
+            const altPath = path.join(tempExtractPath, filePath);
+            console.log(`Trying alternative path: ${altPath}`);
+            try {
+              stats = await fs.stat(altPath);
+              // If this works, update fullPath
+              fullPath = altPath;
+            } catch (altError: any) {
+              console.error(`Alternative path also failed: ${altError.message}`);
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+        
         if (!stats.isFile()) {
           console.warn(`Skipping non-file: ${fullPath}`);
           continue;

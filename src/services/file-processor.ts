@@ -37,7 +37,7 @@ export class FileProcessor {
   /**
    * アーカイブファイルを展開
    */
-  async extractArchive(archivePath: string, extractPath: string): Promise<string[]> {
+  async extractArchive(archivePath: string, extractPath: string): Promise<{ files: string[], rootDir: string | null }> {
     try {
       await fs.mkdir(extractPath, { recursive: true });
 
@@ -128,7 +128,8 @@ export class FileProcessor {
       });
 
       console.log(`Successfully extracted ${extractedFiles.length} files`);
-      return extractedFiles;
+      console.log(`Root directory detected: ${rootDir}`);
+      return { files: extractedFiles, rootDir };
 
     } catch (error: any) {
       console.error('Archive extraction failed:', error);

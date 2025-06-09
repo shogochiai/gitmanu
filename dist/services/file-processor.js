@@ -104,7 +104,8 @@ export class FileProcessor {
                 }
             });
             console.log(`Successfully extracted ${extractedFiles.length} files`);
-            return extractedFiles;
+            console.log(`Root directory detected: ${rootDir}`);
+            return { files: extractedFiles, rootDir };
         }
         catch (error) {
             console.error('Archive extraction failed:', error);

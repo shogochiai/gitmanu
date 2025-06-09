@@ -11,7 +11,10 @@ export declare class FileProcessor {
     /**
      * アーカイブファイルを展開
      */
-    extractArchive(archivePath: string, extractPath: string): Promise<string[]>;
+    extractArchive(archivePath: string, extractPath: string): Promise<{
+        files: string[];
+        rootDir: string | null;
+    }>;
     /**
      * ファイル情報を取得
      */
