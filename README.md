@@ -1,225 +1,228 @@
-# 📱 GitHub Uploader
+# 📱 GitManu
 
-モバイル対応のGitHubプロジェクトアップロードサービス
+Mobile-friendly GitHub project upload service (especially for Mobile Vibe Coding with manus.im)
 
-## 🌟 特徴
+## 🌟 Features
 
-- **📱 モバイル最適化**: スマートフォンからでも快適に操作
-- **🔐 GitHub OAuth**: 安全なGitHub認証システム
-- **📦 tar.gz対応**: アーカイブファイルを自動展開してリポジトリ作成
-- **⚡ 高速処理**: 効率的なファイル処理とアップロード
-- **🛡️ セキュリティ**: レート制限、CORS、セキュリティヘッダー
-- **☁️ クラウド対応**: Fly.ioで簡単デプロイ
+- **📱 Mobile optimization**: Easy to use even on smartphones
+- **🔐 GitHub OAuth**: Secure GitHub authentication system
+- **📦 tar.gz support**: Automatically unpacks archive files and creates repositories
+- **⚡ High-speed processing**: Efficient file processing and uploading
+- **🛡️ Security**: Rate limiting, CORS, security headers
+- **☁️ Cloud-compatible**: Easy deployment with Fly.io
 
-## 🚀 クイックスタート
+## 🚀 Quick start
 
-### 1. リポジトリクローン
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/[username]/github-uploader.git
 cd github-uploader
 ```
 
-### 2. 依存関係インストール
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. 環境変数設定
+### 3. Set environment variables
 
 ```bash
 cp .env.example .env
-# .env ファイルを編集してGitHub OAuth設定を行う
+# Edit the .env file to configure GitHub OAuth settings
 ```
 
-### 4. GitHub OAuth App作成
+### 4. Create a GitHub OAuth App
 
-1. [GitHub Developer Settings](https://github.com/settings/developers) にアクセス
-2. "New OAuth App" をクリック
-3. 以下の情報を入力:
+1. Access [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click “New OAuth App”
+3. Enter the following information:
    - **Application name**: GitHub Uploader
    - **Homepage URL**: `http://localhost:3000`
    - **Authorization callback URL**: `http://localhost:3000/auth/github/callback`
-4. Client IDとClient Secretを`.env`ファイルに設定
+4. Set the Client ID and Client Secret in the `.env` file
 
-### 5. 開発サーバー起動
+### 5. Start the development server
 
 ```bash
 npm run dev
 ```
 
-アプリケーションが `http://localhost:3000` で起動します。
+The application will start at `http://localhost:3000`.
 
-## 🌐 本番デプロイ（Fly.io）
+## 🌐 Production deployment (Fly.io)
 
-### 前提条件
+### Prerequisites
 
-- [Fly.io](https://fly.io) アカウント
-- [flyctl CLI](https://fly.io/docs/hands-on/install-flyctl/) インストール
+- [Fly.io](https://fly.io) account
+- [flyctl CLI](https://fly.io/docs/hands-on/install-flyctl/) installed
 
-### デプロイ手順
+### Deployment procedure
 
 ```bash
-# 自動デプロイスクリプト実行
+# Run the automatic deployment script
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-または手動デプロイ:
+Or manual deployment:
 
 ```bash
-# Fly.io ログイン
+# Fly.io login
 flyctl auth login
 
-# アプリケーション作成
+# Create application
 flyctl apps create github-uploader
 
-# 環境変数設定
+# Set environment variables
 flyctl secrets set GITHUB_CLIENT_ID=your_client_id
 flyctl secrets set GITHUB_CLIENT_SECRET=your_client_secret
 flyctl secrets set JWT_SECRET=your_jwt_secret
 
-# デプロイ
+# Deploy
 flyctl deploy
 ```
 
-## 📖 API ドキュメント
+## 📖 API Documentation
 
-### 認証エンドポイント
+### Authentication Endpoints
 
-| メソッド | エンドポイント | 説明 |
+| Method | Endpoint | Description |
 |---------|---------------|------|
-| GET | `/auth/github` | GitHub OAuth認証開始 |
-| GET | `/auth/github/callback` | OAuth コールバック |
-| POST | `/api/auth/logout` | ログアウト |
-| GET | `/api/auth/status` | 認証状態確認 |
-| GET | `/api/auth/profile` | ユーザープロフィール取得 |
+| GET | `/auth/github` | Start GitHub OAuth authentication |
+| GET | `/auth/github/callback` | OAuth callback |
+| POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/status` | Check authentication status |
+| GET | `/api/auth/profile` | Get user profile |
 
-### アップロードエンドポイント
+### Upload Endpoints
 
-| メソッド | エンドポイント | 説明 |
+| Method | Endpoint | Description |
 |---------|---------------|------|
-| POST | `/api/upload` | ファイルアップロード＆リポジトリ作成 |
-| GET | `/api/upload/repositories` | ユーザーリポジトリ一覧 |
+| POST | `/api/upload` | File Upload & Repository Creation |
+| GET | `/api/upload/repositories` | User Repository List |
 
-### システムエンドポイント
+### System Endpoints
 
-| メソッド | エンドポイント | 説明 |
+| Method | Endpoint | Description |
 |---------|---------------|------|
-| GET | `/health` | ヘルスチェック |
-| GET | `/api` | API情報 |
+| GET | `/health` | Health Check |
+| GET | `/api` | API Information |
 
-## 🔧 設定
+## 🔧 Settings
 
-### 環境変数
+### Environment Variables
 
-| 変数名 | 説明 | デフォルト |
+| Variable Name | Description | Default |
 |--------|------|-----------|
-| `NODE_ENV` | 実行環境 | `development` |
-| `PORT` | ポート番号 | `3000` |
-| `BASE_URL` | ベースURL | `http://localhost:3000` |
+| `NODE_ENV` | Execution Environment | `development` |
+| `PORT` | Port Number | `3000` |
+| `BASE_URL` | Base URL | `http://localhost:3000` |
 | `GITHUB_CLIENT_ID` | GitHub OAuth Client ID | - |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret | - |
-| `JWT_SECRET` | JWT署名用秘密鍵 | - |
-| `MAX_FILE_SIZE` | 最大ファイルサイズ（バイト） | `104857600` (100MB) |
-| `MAX_FILES_PER_ARCHIVE` | アーカイブ内最大ファイル数 | `10000` |
+| `JWT_SECRET` | JWT signing secret key | - |
+| `MAX_FILE_SIZE` | Maximum file size (bytes) | `104857600` (100MB) |
+| `MAX_FILES_PER_ARCHIVE` | Maximum number of files per archive | `10000` |
 
-### ファイル制限
+### File restrictions
 
-- **対応形式**: `.tar.gz`, `.tgz`
-- **最大ファイルサイズ**: 100MB
-- **最大ファイル数**: 10,000ファイル
-- **対応ファイル種別**: ソースコード、設定ファイル、ドキュメント、小さな画像
+- **Supported formats**: `.tar.gz`, `.tgz`
+- **Maximum file size**: 100MB
+- **Maximum number of files**: 10,000 files
+- **Supported file types**: Source code, configuration files, documents, small images
 
-## 📱 使用方法
+## 📱 How to use
 
-### 1. ログイン
+### 1. Log in
 
-1. アプリケーションにアクセス
-2. "GitHubでログイン" ボタンをクリック
-3. GitHub認証を完了
+1. Access the application
+2. Click the “Log in with GitHub” button
+3. Complete GitHub authentication
 
-### 2. プロジェクトアップロード
+### 2. Upload project
 
-1. "ファイルを選択" でtar.gzファイルを選択
-2. プロジェクト名と説明を入力
-3. プライベート/パブリック設定を選択
-4. "アップロード" ボタンをクリック
+1. Select the tar.gz file using “Select file”
+2. Enter the project name and description
+3. Select private/public settings
+4. Click the “Upload” button
 
-### 3. 結果確認
+### 3. Confirm results
 
-- アップロード完了後、GitHubリポジトリのURLが表示されます
-- 自動的にREADME.mdが生成されます（存在しない場合）
+- After the upload is complete, the GitHub repository URL will be displayed
+- README.md will be automatically generated (if it does not already exist)
 
-## 🛡️ セキュリティ
+## 🛡️ Security
 
-- **OAuth認証**: GitHub公式OAuth使用
-- **CSRF保護**: 状態パラメータによる検証
-- **レート制限**: API乱用防止
-- **ファイル検証**: 安全でないファイルの除外
-- **パストラバーサル防止**: ディレクトリ外アクセス防止
+- **OAuth authentication**: Uses official GitHub OAuth
+- **CSRF protection**: Verification using state parameters
+- **Rate limiting**: Prevents API abuse
+- **File verification**: Excludes unsafe files
+- **Path traversal prevention**: Prevents access outside the directory
 
-## 🧪 テスト
+## 🧪 Testing
 
 ```bash
-# ユニットテスト実行
+# Run unit tests
 npm test
 
-# カバレッジ付きテスト
+# Tests with coverage
 npm run test:coverage
 
-# E2Eテスト
+# E2E tests
 npm run test:e2e
 ```
 
-## 📊 監視
+## 📊 Monitoring
 
-### ヘルスチェック
+### Health check
 
 ```bash
 curl http://localhost:3000/health
 ```
 
-### ログ確認（Fly.io）
+### Log check (Fly.io)
 
 ```bash
 flyctl logs --app github-uploader
 ```
 
-### メトリクス
+### Metrics
 
-- リクエスト数
-- レスポンス時間
-- エラー率
-- アップロード成功率
+- Number of requests
+- Response time
+- Error rate
+- Upload success rate
 
-## 🤝 コントリビューション
+## 🤝 Contributions
 
-1. フォークしてください
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Create a pull request
 
-## 📄 ライセンス
+## 📄 License
 
-このプロジェクトは MIT ライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
+This project is released under the MIT License. For details, refer to the [LICENSE](LICENSE) file.
 
-## 🆘 サポート
+## 🆘 Support
 
-問題が発生した場合は、以下の方法でサポートを受けられます:
+If you encounter any issues, you can receive support in the following ways:
 
-- [Issues](https://github.com/[username]/github-uploader/issues) でバグ報告や機能要求
-- [Discussions](https://github.com/[username]/github-uploader/discussions) で質問や議論
+- Report bugs or request features via [Issues](https://github.com/[username]/github-uploader/issues)
+- Ask questions or discuss via [Discussions](https://github.com/[username]/github-uploader/discussions)
 
-## 🙏 謝辞
+## 🙏 Acknowledgments
 
-- [Hono](https://hono.dev/) - 高速なWebフレームワーク
-- [Fly.io](https://fly.io/) - 優れたクラウドプラットフォーム
-- [GitHub API](https://docs.github.com/en/rest) - 強力なAPI
+- [Hono](https://hono.dev/) - A high-speed web framework
+- [Fly.io](https://fly.io/) - An excellent cloud platform
+- [GitHub API](https://docs.github.com/en/rest) - A powerful API
 
 ---
 
-**📱 モバイルからでも簡単にGitHubプロジェクトをアップロード！**
+**📱 Easily upload GitHub projects from your mobile device!**
 
+
+
+Translated with DeepL.com (free version)
